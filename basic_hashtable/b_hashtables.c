@@ -93,7 +93,7 @@ void hash_table_insert(BasicHashTable *ht, char *key, char *value)
   {
     if (strcmp(ht->storage[index]->key, key) != 0)
     {
-      fprintf(stderr, "Existing key does not match input key and will be overwritten!");
+      fprintf(stderr, "Existing key does not match input key and will be overwritten!\n");
     }
     destroy_pair(ht->storage[index]);
   }
