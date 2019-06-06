@@ -104,7 +104,7 @@ void hash_table_insert(HashTable *ht, char *key, char *value)
     }
     destroy_pair(ht->storage[index]);
   }
-  if (index < ht->capacity-1)
+  if (index < ht->capacity - 1)
   {
     if (ht->storage[index + 1] != NULL)
     {
@@ -135,7 +135,27 @@ void hash_table_insert(HashTable *ht, char *key, char *value)
  */
 void hash_table_remove(HashTable *ht, char *key)
 {
+  unsigned int index = hash(key, ht->capacity);
+  if (ht->storage[index]->key != NULL && strcmp(ht->storage[index]->key, key) == 0)
+  {
+    if (index > 0)
+    {
+      if (ht->storage[index - 1] != NULL)
+      {
+        LinkedPair *previous_pair = ht->storage[index - 1];
+        destroy_pair(ht->storage[index - 1]);
+        previous_pair->next = NULL;
+        ht->storage[index - 1] = previous_pair;
+      }
+    }
 
+    destroy_pair(ht->storage[index]);
+    ht->storage[index] = NULL;
+  }
+  else
+  {
+    fprintf(stderr, "Unable to remove entry with key: %s\n", key);
+  }
 }
 
 /*
@@ -148,7 +168,7 @@ void hash_table_remove(HashTable *ht, char *key)
  */
 char *hash_table_retrieve(HashTable *ht, char *key)
 {
-    unsigned int index = hash(key, ht->capacity);
+  unsigned int index = hash(key, ht->capacity);
   if (ht->storage[index] != NULL)
   {
     if (strcmp(ht->storage[index]->key, key) == 0)
@@ -156,7 +176,7 @@ char *hash_table_retrieve(HashTable *ht, char *key)
       return ht->storage[index]->value;
     }
   }
-    fprintf(stderr, "Unable to find entry with key: %s\n", key);
+  fprintf(stderr, "Unable to find entry with key: %s\n", key);
   return NULL;
 }
 
@@ -167,7 +187,7 @@ char *hash_table_retrieve(HashTable *ht, char *key)
  */
 void destroy_hash_table(HashTable *ht)
 {
-    for (int i = 0; i < ht->capacity; i++)
+  for (int i = 0; i < ht->capacity; i++)
   {
     if (ht->storage[i] != NULL)
     {
@@ -212,7 +232,7 @@ int main(void)
 
   // printf("\nResizing hash table from %d to %d.\n", old_capacity, new_capacity);
 
-  // destroy_hash_table(ht);
+  destroy_hash_table(ht);
 
   return 0;
 }
