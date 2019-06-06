@@ -73,8 +73,9 @@ unsigned int hash(char *str, int max)
  */
 HashTable *create_hash_table(int capacity)
 {
-  HashTable *ht;
-
+  HashTable *ht = malloc(sizeof(HashTable));
+  ht->storage = calloc(capacity, sizeof(LinkedPair *));
+  ht->capacity = capacity;
   return ht;
 }
 
@@ -89,7 +90,27 @@ HashTable *create_hash_table(int capacity)
  */
 void hash_table_insert(HashTable *ht, char *key, char *value)
 {
-
+  unsigned int index = hash(key, ht->capacity);
+  LinkedPair *pair = create_pair(key, value);
+  if (ht->storage[index] != NULL)
+  {
+    if (strcmp(ht->storage[index]->key, key) != 0)
+    {
+      fprintf(stderr, "Existing key does not match input key and will be overwritten!");
+    }
+    destroy_pair(ht->storage[index]);
+  }
+  ht->storage[index] = pair;
+  if (index>0)
+  {
+    if (ht->storage[index-1] != NULL) {
+      LinkedPair *previous_pair = ht->storage[index-1];
+      pair->next = pair;
+      destroy_pair(ht->storage[index-1]);
+      ht->storage[index-1] = previous_pair;
+    }
+  }
+  
 }
 
 /*
