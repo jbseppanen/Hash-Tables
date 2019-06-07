@@ -9,6 +9,7 @@
   More specifically, the `next` field is a pointer pointing to the the 
   next `LinkedPair` in the list of `LinkedPair` nodes. 
  */
+int dbg_counter = 0;
 typedef struct LinkedPair
 {
   char *key;
@@ -94,34 +95,30 @@ HashTable *create_hash_table(int capacity)
  */
 void hash_table_insert(HashTable *ht, char *key, char *value)
 {
-  unsigned int index = hash(key, ht->capacity);
-  LinkedPair *pair = create_pair(key, value);
+  int index = hash(key, ht->capacity);
   if (ht->storage[index] != NULL)
   {
-    if (strcmp(ht->storage[index]->key, key) != 0)
+    LinkedPair *next_pair = ht->storage[index];
+    while (next_pair->next != NULL)
     {
-      fprintf(stderr, "Existing key does not match input key and will be overwritten!\n");
+      if (strcmp(next_pair->next->key, key) == 0)
+      {
+        next_pair = next_pair->next;
+        free(next_pair->value);
+        next_pair->value = strdup(value);
+        return;
+      }
+      else
+      {
+        next_pair = next_pair->next;
+      }
     }
-    destroy_pair(ht->storage[index]);
+    LinkedPair *pair = create_pair(key, value);
+    next_pair->next = pair;
   }
-  if (index < ht->capacity - 1)
+  else
   {
-    if (ht->storage[index + 1] != NULL)
-    {
-      pair->next = ht->storage[index + 1];
-    }
-  }
-
-  ht->storage[index] = pair;
-  if (index > 0)
-  {
-    if (ht->storage[index - 1] != NULL)
-    {
-      LinkedPair *previous_pair = ht->storage[index - 1];
-      pair->next = pair;
-      destroy_pair(ht->storage[index - 1]);
-      ht->storage[index - 1] = previous_pair;
-    }
+    ht->storage[index] = create_pair(key, value);
   }
 }
 
@@ -135,27 +132,31 @@ void hash_table_insert(HashTable *ht, char *key, char *value)
  */
 void hash_table_remove(HashTable *ht, char *key)
 {
-  unsigned int index = hash(key, ht->capacity);
-  if (ht->storage[index]->key != NULL && strcmp(ht->storage[index]->key, key) == 0)
+  int index = hash(key, ht->capacity);
+  if (ht->storage[index] != NULL)
   {
-    if (index > 0)
+    LinkedPair *pair = ht->storage[index];
+    LinkedPair *previous_pair = NULL;
+    while (pair != NULL)
     {
-      if (ht->storage[index - 1] != NULL)
+      if (strcmp(pair->key, key) == 0)
       {
-        LinkedPair *previous_pair = ht->storage[index - 1];
-        destroy_pair(ht->storage[index - 1]);
-        previous_pair->next = NULL;
-        ht->storage[index - 1] = previous_pair;
+        LinkedPair *next_pair = pair->next;
+        destroy_pair(pair);
+        if (previous_pair != NULL)
+        {
+          previous_pair->next = next_pair;
+        }
+        return;
+      }
+      else
+      {
+        previous_pair = pair;
+        pair = pair->next;
       }
     }
-
-    destroy_pair(ht->storage[index]);
-    ht->storage[index] = NULL;
   }
-  else
-  {
-    fprintf(stderr, "Unable to remove entry with key: %s\n", key);
-  }
+  fprintf(stderr, "Unable to remove entry with key: %s\n", key);
 }
 
 /*
@@ -168,12 +169,27 @@ void hash_table_remove(HashTable *ht, char *key)
  */
 char *hash_table_retrieve(HashTable *ht, char *key)
 {
-  unsigned int index = hash(key, ht->capacity);
+  int index = hash(key, ht->capacity);
   if (ht->storage[index] != NULL)
   {
     if (strcmp(ht->storage[index]->key, key) == 0)
     {
       return ht->storage[index]->value;
+    }
+    else
+    {
+      LinkedPair *next_pair = ht->storage[index]->next;
+      while (next_pair != NULL)
+      {
+        if (strcmp(next_pair->key, key) == 0)
+        {
+          return next_pair->value;
+        }
+        else
+        {
+          next_pair = next_pair->next;
+        }
+      }
     }
   }
   fprintf(stderr, "Unable to find entry with key: %s\n", key);
@@ -208,8 +224,21 @@ void destroy_hash_table(HashTable *ht)
  */
 HashTable *hash_table_resize(HashTable *ht)
 {
-  HashTable *new_ht;
-
+  HashTable *new_ht = create_hash_table(ht->capacity * 2);
+  for (int i = 0; i < ht->capacity; i++)
+  {
+    LinkedPair *pair = ht->storage[i];
+    if (pair != NULL)
+    {
+      char *n_key = pair->key;
+      char *value = pair->value;
+      if (n_key != NULL && value != NULL)
+      {
+        hash_table_insert(new_ht, ht->storage[i]->key, ht->storage[i]->value);
+      }
+    }
+  }
+  destroy_hash_table(ht);
   return new_ht;
 }
 
@@ -225,6 +254,10 @@ int main(void)
   printf("%s", hash_table_retrieve(ht, "line_1"));
   printf("%s", hash_table_retrieve(ht, "line_2"));
   printf("%s", hash_table_retrieve(ht, "line_3"));
+  hash_table_remove(ht, "line_3");
+  printf("%s", hash_table_retrieve(ht, "line_3"));
+
+  
 
   // int old_capacity = ht->capacity;
   // ht = hash_table_resize(ht);
@@ -232,7 +265,7 @@ int main(void)
 
   // printf("\nResizing hash table from %d to %d.\n", old_capacity, new_capacity);
 
-  destroy_hash_table(ht);
+  // destroy_hash_table(ht);
 
   return 0;
 }

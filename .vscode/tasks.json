@@ -1,0 +1,28 @@
+{
+    "version": "2.0.0",
+    "windows": {
+        "options": {
+            "shell": {
+                "executable": "c:\\windows\\sysnative\\bash.exe",
+                "args": ["-c"]
+            }
+        }
+    },
+    "tasks": [
+        {
+            "label": "build on WSL",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "-g",
+                "-o",
+                "mnt/j/Coding/C/Hash-Tables/full_hashtable/hashtables",
+                "mnt/j/Coding/C/Hash-Tables/full_hashtable/hashtables/hashtables.c"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
